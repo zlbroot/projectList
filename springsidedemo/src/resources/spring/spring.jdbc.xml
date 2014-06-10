@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    http://www.springframework.org/schema/data/jpa 
+    http://www.springframework.org/schema/data/jpa/spring-jpa-1.3.xsd
+    http://www.springframework.org/schema/aop   
+    http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+    
+	<bean id="parentDataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		init-method="init" destroy-method="close" abstract="true">
+		<!-- 配置监控统计拦截的filters -->
+		<property name="filters" value="${jdbc.commons.filters}" />
+		<!-- 配置初始化大小、最小、最大 -->
+		<property name="maxActive" value="${jdbc.commons.maxActive}" />
+		<property name="initialSize" value="${jdbc.commons.initialSize}" />
+		<property name="minIdle" value="${jdbc.commons.minIdle}" />
+		<!-- 配置获取连接等待超时的时间 -->
+		<property name="maxWait" value="${jdbc.commons.maxWait}" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+		<property name="timeBetweenEvictionRunsMillis"
+			value="${jdbc.commons.timeBetweenEvictionRunsMillis}" />
+		<!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="${jdbc.commons.minEvictableIdleTimeMillis}" />
+		<property name="validationQuery" value="${jdbc.commons.validationQuery}" />
+		<property name="testWhileIdle" value="${jdbc.commons.testWhileIdle}" />
+		<property name="testOnBorrow" value="${jdbc.commons.testOnBorrow}" />
+		<property name="testOnReturn" value="${jdbc.commons.testOnReturn}" />
+		<!-- 打开PSCache，并且指定每个连接上PSCache的大小 -->
+		<property name="poolPreparedStatements" value="${jdbc.commons.poolPreparedStatements}" />
+		<property name="maxPoolPreparedStatementPerConnectionSize"
+			value="${jdbc.commons.maxPoolPreparedStatementPerConnectionSize}" />
+	</bean>
+	<!-- 数据源配置 -->
+	<bean name="mainDataSource" parent="parentDataSource">
+		<property name="url"
+			value="jdbc:mysql://${jdbc.main.server}?useUnicode=true&amp;characterEncoding=UTF8&amp;zeroDateTimeBehavior=convertToNull&amp;autoReconnect=true" />
+		<property name="username" value="${jdbc.main.user}" />
+		<property name="password" value="${jdbc.main.password}" />
+		<property name="maxActive" value="${jdbc.main.maxActive}" />
+		<property name="initialSize" value="${jdbc.main.initialSize}" />
+	</bean>
+
+	
+	
+	<!-- Jpa Entity Manager 配置 -->
+	<bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"> 
+		<property name="dataSource" ref="mainDataSource"/>
+		<property name="jpaVendorAdapter" ref="hibernateJpaVendorAdapter"/>
+		<property name="packagesToScan" value="com.bos"/>
+		<!-- <property name="jpaProperties">
+			<props>
+				  命名规则 My_NAME->MyName  
+				<prop key="hibernate.ejb.naming_strategy">org.hibernate.cfg.ImprovedNamingStrategy</prop>
+			</props>
+		</property> -->
+	</bean>
+	
+	<bean id="hibernateJpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+		<property name="databasePlatform">
+			<bean factory-method="getDialect" class="org.springside.modules.persistence.Hibernates">
+				<constructor-arg ref="mainDataSource"/>
+			</bean>
+		</property>
+	</bean>
+
+	<!-- Spring Data Jpa配置 -->
+ 	<jpa:repositories base-package="com.bos"  transaction-manager-ref="transactionManager" entity-manager-factory-ref="entityManagerFactory"/>
+   
+	<!-- Jpa 事务配置 -->
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory"/>
+	</bean>
+
+	<!-- JSR303 Validator定义 -->
+ 	<bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean" />
+
+	<!-- 使用配置式的事务拦截器 -->
+	<bean id="transactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="transactionAttributes">
+			<props>
+				<!-- 生成序列的方法不延续事务的传播，单独NEW事务 -->
+				<prop key="generateSerialNo">PROPAGATION_REQUIRES_NEW,ISOLATION_DEFAULT</prop>
+				<prop key="get*">PROPAGATION_SUPPORTS,ISOLATION_DEFAULT,readOnly</prop>
+				<prop key="find*">PROPAGATION_SUPPORTS,ISOLATION_DEFAULT,readOnly</prop>
+				<prop key="query*">PROPAGATION_SUPPORTS,ISOLATION_DEFAULT,readOnly</prop>
+				<prop key="load*">PROPAGATION_SUPPORTS,ISOLATION_DEFAULT,readOnly</prop>
+				<prop key="save*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-Exception</prop>
+				<prop key="insert*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT</prop>
+				<prop key="update*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-Exception</prop>
+				<prop key="delete*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-Exception</prop>
+				<prop key="remove*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-Exception</prop>
+				<prop key="batch*">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-Exception</prop>
+				<prop key="newSave*">PROPAGATION_REQUIRES_NEW,ISOLATION_DEFAULT,-Exception</prop>
+				<prop key="doProccess">PROPAGATION_REQUIRED,ISOLATION_DEFAULT</prop>
+				<prop key="onError">PROPAGATION_REQUIRED,ISOLATION_DEFAULT,-Exception</prop>
+<!-- 				<prop key="ionSave*">PROPAGATION_REQUIRES_NEW,ISOLATION_DEFAULT,-Exception</prop> -->
+			</props>
+		</property> 
+	</bean>
+	<!-- 配置拦截器的作用范围 -->
+	<bean id="proxyCreateA" class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+		<!-- proxyTargetClass属性值决定是基于接口的还是基于类的代理被创建 -->
+		<property name="proxyTargetClass" value="true" />
+		<property name="beanNames">
+			<list>
+				<value>*Service</value>
+			</list>
+		</property>
+		<property name="interceptorNames">
+			<list>
+				<value>transactionInterceptor</value>
+			</list>
+		</property>
+	</bean>
+</beans>
