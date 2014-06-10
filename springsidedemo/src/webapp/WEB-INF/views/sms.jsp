@@ -14,7 +14,7 @@
 			<div class="control-group">
 				<label for="description" class="control-label">短信内容:</label>
 				<div class="controls">
-					<textarea id="msg" name="msg" class="form-control" rows="3"></textarea>
+					<textarea id="msg" name="msg" class="form-control" rows="5" style="width:600px;"></textarea>
 				</div>
 			</div>	
 			<div class="form-actions">

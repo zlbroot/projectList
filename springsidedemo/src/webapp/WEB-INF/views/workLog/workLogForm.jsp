@@ -21,7 +21,7 @@
 			<div class="control-group">
 				<label for="description" class="control-label">日志内容:</label>
 				<div class="controls">
-					<textarea id="content" name="content"  class="form-control" rows="4" style="width:300px;">${workLog.content}</textarea>
+					<textarea id="content" name="content"  class="form-control" rows="5" style="width:600px;">${workLog.content}</textarea>
 				</div>
 			</div>	
 			<div class="form-actions">
