@@ -10,7 +10,7 @@
     http://www.springframework.org/schema/data/jpa 
     http://www.springframework.org/schema/data/jpa/spring-jpa-1.3.xsd
     http://www.springframework.org/schema/aop   
-    http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+    http://www.springframework.org/schema/aop/spring-aop-4.0.xsd" default-lazy-init="true">
     
 	<bean id="parentDataSource" class="com.alibaba.druid.pool.DruidDataSource"
 		init-method="init" destroy-method="close" abstract="true">
