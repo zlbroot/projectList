@@ -1,1 +1,8 @@
-/spring/
+/application.online.properties
+/application.properties
+/com
+/ehcache
+/log4j.properties
+/spring
+/springsidedemo
+/template
